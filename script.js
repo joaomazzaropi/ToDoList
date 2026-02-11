@@ -2,6 +2,7 @@
 const titleInput = document.getElementById('title-input');
 const descInput = document.getElementById('desc-input');
 const dueDateInput = document.getElementById('due-date-input');
+const prioritySelect = document.getElementById('priority-select');
 const addBtn = document.getElementById('add-btn');
 const taskList = document.getElementById('task-list');
 const pendingCount = document.getElementById('pending-count');
@@ -40,9 +41,30 @@ function isOverdue(task) {
   return due < today;
 }
 
+function getPriorityValue(priority) {
+  return priority === 'high' ? 3 : priority === 'medium' ? 2 : 1;
+}
+
+function sortTasks(taskArray) {
+  return taskArray.sort((a, b) => {
+    // Primeiro por prioridade (alta > média > baixa)
+    const prioA = getPriorityValue(a.priority || 'medium');
+    const prioB = getPriorityValue(b.priority || 'medium');
+    if (prioA !== prioB) return prioB - prioA;
+
+    // Depois por data de vencimento (mais próxima primeiro)
+    if (a.dueDate && b.dueDate) {
+      return new Date(a.dueDate) - new Date(b.dueDate);
+    }
+    if (a.dueDate) return -1;
+    if (b.dueDate) return 1;
+    return 0;
+  });
+}
+
 function createTaskElement(task, index) {
   const li = document.createElement('li');
-  li.className = 'task-item' + (task.completed ? ' completed' : '') + (isOverdue(task) ? ' overdue' : '');
+  li.className = `task-item ${task.completed ? 'completed' : ''} ${isOverdue(task) ? 'overdue' : ''} priority-${task.priority || 'medium'}`;
   li.dataset.index = index;
 
   const checkbox = document.createElement('input');
@@ -78,13 +100,13 @@ function createTaskElement(task, index) {
 
 function renderTasks() {
   taskList.innerHTML = '';
-  tasks.forEach((task, index) => {
-    const show = currentFilter === 'all' ||
-                 (currentFilter === 'pending' && !task.completed) ||
-                 (currentFilter === 'completed' && task.completed);
-    if (show) {
-      taskList.appendChild(createTaskElement(task, index));
-    }
+  let filteredTasks = tasks.slice();
+  if (currentFilter === 'pending') filteredTasks = filteredTasks.filter(t => !t.completed);
+  if (currentFilter === 'completed') filteredTasks = filteredTasks.filter(t => t.completed);
+
+  const sorted = sortTasks(filteredTasks);
+  sorted.forEach((task, index) => {
+    taskList.appendChild(createTaskElement(task, tasks.indexOf(task)));
   });
   updateCount();
 }
@@ -92,16 +114,18 @@ function renderTasks() {
 function addTask() {
   const title = titleInput.value.trim();
   const description = descInput.value.trim();
-  const dueDate = dueDateInput.value; // YYYY-MM-DD
+  const dueDate = dueDateInput.value;
+  const priority = prioritySelect.value;
   if (!title) return;
 
-  tasks.push({ title, description, dueDate, completed: false });
+  tasks.push({ title, description, dueDate, priority, completed: false });
   saveTasks();
   renderTasks();
-  renderCalendar(); // Atualiza badges
+  renderCalendar();
   titleInput.value = '';
   descInput.value = '';
   dueDateInput.value = '';
+  prioritySelect.value = 'medium';
   titleInput.focus();
 }
 
@@ -164,19 +188,16 @@ function renderCalendar() {
   const firstDay = new Date(year, month, 1).getDay();
   const daysInMonth = new Date(year, month + 1, 0).getDate();
 
-  // Células vazias
   for (let i = 0; i < firstDay; i++) {
     const empty = document.createElement('div');
     calendarDays.appendChild(empty);
   }
 
-  // Dias
   for (let day = 1; day <= daysInMonth; day++) {
     const dayEl = document.createElement('div');
     const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
     dayEl.textContent = day;
 
-    // Badge de tarefas
     const dayTasks = getTasksForDate(dateStr);
     if (dayTasks.length > 0) {
       const badge = document.createElement('span');
@@ -185,13 +206,11 @@ function renderCalendar() {
       dayEl.appendChild(badge);
     }
 
-    // Dia atual
     const today = new Date();
     if (day === today.getDate() && month === today.getMonth() && year === today.getFullYear()) {
       dayEl.classList.add('today');
     }
 
-    // Clique no dia
     dayEl.onclick = () => showDayTasks(dateStr, dayTasks);
 
     calendarDays.appendChild(dayEl);
@@ -204,7 +223,7 @@ function showDayTasks(dateStr, dayTasks) {
   modalTasks.innerHTML = '';
   dayTasks.forEach(task => {
     const li = document.createElement('li');
-    li.className = 'modal-task';
+    li.className = `modal-task priority-${task.priority || 'medium'}`;
     li.innerHTML = `
       <strong>${task.title}</strong><br>
       ${task.description ? task.description + '<br>' : ''}

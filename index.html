@@ -27,6 +27,11 @@
         <input type="text" id="title-input" placeholder="Título" autofocus>
         <input type="text" id="desc-input" placeholder="Descrição (opcional)">
         <input type="date" id="due-date-input">
+        <select id="priority-select">
+          <option value="medium">Média</option>
+          <option value="low">Baixa</option>
+          <option value="high">Alta</option>
+        </select>
         <button id="add-btn">Adicionar</button>
       </div>
 
@@ -77,6 +82,8 @@
         <ul id="modal-tasks"></ul>
       </div>
     </div>
+  </div>
+
   <script src="script.js"></script>
 </body>
 </html>

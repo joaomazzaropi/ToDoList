@@ -71,7 +71,8 @@ body.dark .subtitle { color: #bbb; }
   flex-wrap: wrap;
 }
 
-.input-area input {
+.input-area input,
+.input-area select {
   flex: 1;
   padding: 1rem;
   border: 2px solid #ddd;
@@ -80,12 +81,18 @@ body.dark .subtitle { color: #bbb; }
   min-width: 120px;
 }
 
+.input-area select {
+  flex: none;
+  width: 140px;
+}
+
 .input-area input[type="date"] {
   flex: none;
   width: 180px;
 }
 
-body.dark .input-area input {
+body.dark .input-area input,
+body.dark .input-area select {
   background: #3a3a5e;
   border-color: #555;
   color: white;
@@ -142,6 +149,18 @@ body.dark .task-item { background: #3a3a5e; }
 
 .task-item.overdue {
   border-left: 5px solid #e74c3c;
+}
+
+.task-item.priority-high {
+  border-left: 5px solid #e74c3c;
+}
+
+.task-item.priority-medium {
+  border-left: 5px solid #f39c12;
+}
+
+.task-item.priority-low {
+  border-left: 5px solid #27ae60;
 }
 
 .task-item.completed {
@@ -360,7 +379,7 @@ body.dark .day-badge {
   width: 90%;
   max-width: 500px;
   max-height: 80vh;
-  overflow-y: auto;
+  overflow-y:  auto;
 }
 
 body.dark .modal-content {
@@ -396,15 +415,18 @@ body.dark .modal-task {
   background: #3a3a5e;
 }
 
+.modal-task.priority-high {
+  border-left: 5px solid #e74c3c;
+}
+
+.modal-task.priority-medium {
+  border-left: 5px solid #f39c12;
+}
+
+.modal-task.priority-low {
+  border-left: 5px solid #27ae60;
+}
+
 .hidden {
   display: none;
 }
-
-.credit {
-  text-align: center;
-  margin-top: 2rem;
-  color: #999;
-  font-size: 0.8rem;
-}
-
-body.dark .credit { color: #777; }
