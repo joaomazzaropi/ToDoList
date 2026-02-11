@@ -327,13 +327,17 @@ closeModal.onclick = () => modal.classList.add('hidden');
 modal.onclick = (e) => e.target === modal && modal.classList.add('hidden');
 
 prevMonthBtn.onclick = () => {
+  calendarDays.classList.add('fade');
   currentDate.setMonth(currentDate.getMonth() - 1);
   renderCalendar();
+  setTimeout(() => calendarDays.classList.remove('fade'), 400);
 };
 
 nextMonthBtn.onclick = () => {
+  calendarDays.classList.add('fade');
   currentDate.setMonth(currentDate.getMonth() + 1);
   renderCalendar();
+  setTimeout(() => calendarDays.classList.remove('fade'), 400);
 };
 
 themeToggle.addEventListener('click', () => {
