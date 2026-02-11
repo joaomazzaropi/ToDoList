@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>To-Do List</title>
+  <link rel="stylesheet" href="style.css">
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+  <div class="container">
+    <header>
+      <h1>To-Do List</h1>
+      <p class="subtitle">Organize sua vida de forma simples e eficiente!</p>
+      <button id="theme-toggle"><i class="fas fa-moon"></i></button>
+    </header>
+
+    <div class="tabs">
+      <button class="tab-btn active" data-view="tasks-view">Lista de Tarefas</button>
+      <button class="tab-btn" data-view="calendar-view">Calendário</button>
+    </div>
+
+    <!-- Tasks View -->
+    <div id="tasks-view">
+      <div class="input-area">
+        <input type="text" id="title-input" placeholder="Título" autofocus>
+        <input type="text" id="desc-input" placeholder="Descrição (opcional)">
+        <input type="date" id="due-date-input">
+        <button id="add-btn">Adicionar</button>
+      </div>
+
+      <div class="filters">
+        <button class="filter-btn active" data-filter="all">Todas</button>
+        <button class="filter-btn" data-filter="pending">Pendentes</button>
+        <button class="filter-btn" data-filter="completed">Concluídas</button>
+      </div>
+
+      <ul id="task-list"></ul>
+
+      <div class="footer">
+        <p>Tarefas pendentes: <span id="pending-count">0</span></p>
+        <button id="clear-completed">Limpar concluídas</button>
+      </div>
+    </div>
+
+    <!-- Calendar View -->
+    <div id="calendar-view" class="hidden">
+      <div class="calendar-container">
+        <div class="calendar-header">
+          <button id="prev-month"><i class="fas fa-chevron-left"></i></button>
+          <h2 id="month-year"></h2>
+          <button id="next-month"><i class="fas fa-chevron-right"></i></button>
+        </div>
+
+        <div class="weekdays">
+          <div>Dom</div>
+          <div>Seg</div>
+          <div>Ter</div>
+          <div>Qua</div>
+          <div>Qui</div>
+          <div>Sex</div>
+          <div>Sáb</div>
+        </div>
+
+        <div id="calendar-days" class="calendar-days"></div>
+      </div>
+    </div>
+
+    <!-- Modal para tarefas do dia -->
+    <div id="day-modal" class="modal hidden">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h3>Tarefas de <span id="modal-date"></span></h3>
+          <button id="close-modal"><i class="fas fa-times"></i></button>
+        </div>
+        <ul id="modal-tasks"></ul>
+      </div>
+    </div>
+  <script src="script.js"></script>
+</body>
+</html>
