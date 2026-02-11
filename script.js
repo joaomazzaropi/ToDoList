@@ -22,6 +22,7 @@ const closeModal = document.getElementById('close-modal');
 let tasks = JSON.parse(localStorage.getItem('tasks')) || [];
 let currentFilter = 'all';
 let currentDate = new Date();
+let editingIndex = -1; // Para controle de edição
 
 // ------------------- Tasks Functions -------------------
 function saveTasks() {
@@ -47,12 +48,10 @@ function getPriorityValue(priority) {
 
 function sortTasks(taskArray) {
   return taskArray.sort((a, b) => {
-    // Primeiro por prioridade (alta > média > baixa)
     const prioA = getPriorityValue(a.priority || 'medium');
     const prioB = getPriorityValue(b.priority || 'medium');
     if (prioA !== prioB) return prioB - prioA;
 
-    // Depois por data de vencimento (mais próxima primeiro)
     if (a.dueDate && b.dueDate) {
       return new Date(a.dueDate) - new Date(b.dueDate);
     }
@@ -60,6 +59,36 @@ function sortTasks(taskArray) {
     if (b.dueDate) return 1;
     return 0;
   });
+}
+
+function enterEditMode(index) {
+  editingIndex = index;
+  renderTasks();
+}
+
+function saveEdit(index) {
+  const task = tasks[index];
+  const newTitle = taskList.querySelector(`[data-index="${index}"] .edit-title`).value.trim();
+  const newDesc = taskList.querySelector(`[data-index="${index}"] .edit-desc`).value.trim();
+  const newDue = taskList.querySelector(`[data-index="${index}"] .edit-due`).value;
+  const newPriority = taskList.querySelector(`[data-index="${index}"] .edit-priority`).value;
+
+  if (!newTitle) return; // Não permite título vazio
+
+  task.title = newTitle;
+  task.description = newDesc;
+  task.dueDate = newDue;
+  task.priority = newPriority;
+
+  editingIndex = -1;
+  saveTasks();
+  renderTasks();
+  renderCalendar();
+}
+
+function cancelEdit(index) {
+  editingIndex = -1;
+  renderTasks();
 }
 
 function createTaskElement(task, index) {
@@ -72,29 +101,89 @@ function createTaskElement(task, index) {
   checkbox.checked = task.completed;
   checkbox.onchange = () => toggleComplete(index);
 
-  const content = document.createElement('div');
-  content.className = 'task-content';
+  if (editingIndex === index) {
+    // Modo edição
+    li.classList.add('edit-mode');
 
-  const title = document.createElement('div');
-  title.className = 'task-title';
-  title.textContent = task.title;
+    const editTitle = document.createElement('input');
+    editTitle.className = 'edit-title';
+    editTitle.value = task.title;
 
-  const desc = document.createElement('div');
-  desc.className = 'task-desc';
-  desc.textContent = task.description || '';
+    const editDesc = document.createElement('input');
+    editDesc.className = 'edit-desc';
+    editDesc.value = task.description || '';
 
-  const due = document.createElement('div');
-  due.className = 'task-due';
-  due.textContent = task.dueDate ? `Vence em: ${new Date(task.dueDate).toLocaleDateString('pt-BR')}` : '';
-  if (isOverdue(task)) due.textContent += ' (Atrasada!)';
+    const editDue = document.createElement('input');
+    editDue.className = 'edit-due';
+    editDue.type = 'date';
+    editDue.value = task.dueDate || '';
 
-  content.append(title, desc, due);
+    const editPriority = document.createElement('select');
+    editPriority.className = 'edit-priority';
+    ['low', 'medium', 'high'].forEach(p => {
+      const opt = document.createElement('option');
+      opt.value = p;
+      opt.textContent = p === 'high' ? 'Alta' : p === 'medium' ? 'Média' : 'Baixa';
+      if (p === (task.priority || 'medium')) opt.selected = true;
+      editPriority.appendChild(opt);
+    });
 
-  const deleteBtn = document.createElement('button');
-  deleteBtn.innerHTML = '<i class="fas fa-trash"></i>';
-  deleteBtn.onclick = () => deleteTask(index);
+    const editButtons = document.createElement('div');
+    editButtons.className = 'edit-buttons';
 
-  li.append(checkbox, content, deleteBtn);
+    const saveBtn = document.createElement('button');
+    saveBtn.className = 'save-btn';
+    saveBtn.textContent = 'Salvar';
+    saveBtn.onclick = () => saveEdit(index);
+
+    const cancelBtn = document.createElement('button');
+    cancelBtn.className = 'cancel-btn';
+    cancelBtn.textContent = 'Cancelar';
+    cancelBtn.onclick = () => cancelEdit(index);
+
+    editButtons.append(saveBtn, cancelBtn);
+
+    const content = document.createElement('div');
+    content.className = 'task-content';
+    content.append(editTitle, editDesc, editDue, editPriority, editButtons);
+
+    li.append(checkbox, content);
+  } else {
+    // Modo normal
+    const content = document.createElement('div');
+    content.className = 'task-content';
+
+    const title = document.createElement('div');
+    title.className = 'task-title';
+    title.textContent = task.title;
+
+    const desc = document.createElement('div');
+    desc.className = 'task-desc';
+    desc.textContent = task.description || '';
+
+    const due = document.createElement('div');
+    due.className = 'task-due';
+    due.textContent = task.dueDate ? `Vence em: ${new Date(task.dueDate).toLocaleDateString('pt-BR')}` : '';
+    if (isOverdue(task)) due.textContent += ' (Atrasada!)';
+
+    content.append(title, desc, due);
+
+    const actions = document.createElement('div');
+    actions.className = 'task-actions';
+
+    const editBtn = document.createElement('button');
+    editBtn.innerHTML = '<i class="fas fa-edit"></i>';
+    editBtn.onclick = () => enterEditMode(index);
+
+    const deleteBtn = document.createElement('button');
+    deleteBtn.innerHTML = '<i class="fas fa-trash"></i>';
+    deleteBtn.onclick = () => deleteTask(index);
+
+    actions.append(editBtn, deleteBtn);
+
+    li.append(checkbox, content, actions);
+  }
+
   return li;
 }
 
@@ -105,8 +194,9 @@ function renderTasks() {
   if (currentFilter === 'completed') filteredTasks = filteredTasks.filter(t => t.completed);
 
   const sorted = sortTasks(filteredTasks);
-  sorted.forEach((task, index) => {
-    taskList.appendChild(createTaskElement(task, tasks.indexOf(task)));
+  sorted.forEach((task, sortedIndex) => {
+    const originalIndex = tasks.indexOf(task);
+    taskList.appendChild(createTaskElement(task, originalIndex));
   });
   updateCount();
 }
@@ -159,7 +249,6 @@ filterBtns.forEach(btn => {
   };
 });
 
-// ------------------- Tabs -------------------
 tabBtns.forEach(btn => {
   btn.onclick = () => {
     document.querySelector('.tab-btn.active').classList.remove('active');
@@ -172,7 +261,6 @@ tabBtns.forEach(btn => {
   };
 });
 
-// ------------------- Calendar Functions -------------------
 function getTasksForDate(dateStr) {
   return tasks.filter(t => t.dueDate === dateStr);
 }
@@ -248,7 +336,6 @@ nextMonthBtn.onclick = () => {
   renderCalendar();
 };
 
-// ------------------- Theme -------------------
 themeToggle.addEventListener('click', () => {
   document.body.classList.toggle('dark');
   const isDark = document.body.classList.contains('dark');
@@ -261,7 +348,6 @@ if (localStorage.getItem('theme') === 'dark') {
   themeToggle.innerHTML = '<i class="fas fa-sun"></i>';
 }
 
-// Eventos
 addBtn.onclick = addTask;
 titleInput.addEventListener('keypress', e => e.key === 'Enter' && addTask());
 descInput.addEventListener('keypress', e => e.key === 'Enter' && addTask());
