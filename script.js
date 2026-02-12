@@ -347,6 +347,75 @@ themeToggle.addEventListener('click', () => {
   localStorage.setItem('theme', isDark ? 'dark' : 'light');
 });
 
+function renderTasks() {
+  taskList.innerHTML = '';
+  let filteredTasks = tasks.slice();
+  if (currentFilter === 'pending') filteredTasks = filteredTasks.filter(t => !t.completed);
+  if (currentFilter === 'completed') filteredTasks = filteredTasks.filter(t => t.completed);
+
+  // Ordenação automática só se não tiver ordem manual (mas como drag sobrescreve o array, mantém a ordem atual)
+  const displayedTasks = sortTasks(filteredTasks); // Mantém fallback
+
+  displayedTasks.forEach((task, sortedIndex) => {
+    const originalIndex = tasks.indexOf(task);
+    const li = createTaskElement(task, originalIndex);
+
+    // Adiciona draggable só se não concluída
+    if (!task.completed) {
+      li.draggable = true;
+    }
+
+    taskList.appendChild(li);
+  });
+  updateCount();
+
+  // Adiciona eventos de drag depois de renderizar
+  addDragEvents();
+}
+
+function addDragEvents() {
+  const items = taskList.querySelectorAll('.task-item[draggable="true"]');
+
+  items.forEach(item => {
+    item.addEventListener('dragstart', e => {
+      item.classList.add('dragging');
+      e.dataTransfer.setData('text/plain', item.dataset.index);
+    });
+
+    item.addEventListener('dragend', () => {
+      item.classList.remove('dragging');
+      document.querySelectorAll('.drop-target').forEach(el => el.classList.remove('drop-target'));
+    });
+
+    item.addEventListener('dragover', e => {
+      e.preventDefault();
+      item.classList.add('drop-target');
+    });
+
+    item.addEventListener('dragleave', () => {
+      item.classList.remove('drop-target');
+    });
+
+    item.addEventListener('drop', e => {
+      e.preventDefault();
+      item.classList.remove('drop-target');
+
+      const draggedIndex = parseInt(e.dataTransfer.getData('text/plain'));
+      const targetIndex = parseInt(item.dataset.index);
+
+      if (draggedIndex === targetIndex) return;
+
+      // Reordena o array principal
+      const [draggedTask] = tasks.splice(draggedIndex, 1);
+      tasks.splice(targetIndex, 0, draggedTask);
+
+      saveTasks();
+      renderTasks();
+      renderCalendar();
+    });
+  });
+}
+
 if (localStorage.getItem('theme') === 'dark') {
   document.body.classList.add('dark');
   themeToggle.innerHTML = '<i class="fas fa-sun"></i>';

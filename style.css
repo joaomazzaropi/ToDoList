@@ -203,6 +203,36 @@ body.dark .task-item:hover {
   border-left: 5px solid #e74c3c;
 }
 
+.task-item.dragging {
+  opacity: 0.5;
+  background: #e0e0e0 !important;
+}
+
+body.dark .task-item.dragging {
+  background: #4a4a6e !important;
+}
+
+.task-item.drop-target::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 4px;
+  background: #4a6fa5;
+  border-radius: 2px;
+  top: -2px;
+  transition: all 0.2s ease;
+}
+
+body.dark .task-item.drop-target::before {
+  background: #a0b4ff;
+}
+
+.task-item.drop-target {
+  transform: scale(1.02);
+  transition: transform 0.2s ease;
+}
+
 .task-item.priority-high {
   border-left: 5px solid #e74c3c;
 }
